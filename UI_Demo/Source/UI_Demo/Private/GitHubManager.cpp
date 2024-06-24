@@ -2,6 +2,7 @@
 
 
 #include "GitHubManager.h"
+#include "GitHubRepositoryInfo.h"
 
 void UGitHubManager::SearchRepositories(const FString& Keyword)
 {
@@ -19,17 +20,36 @@ void UGitHubManager::SearchRepositories(const FString& Keyword)
 
 void UGitHubManager::OnSearchCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
+    TArray<FGitHubRepositoryInfo> GitHubInfos;
+
     if (bWasSuccessful && Response->GetResponseCode() == 200)
     {
-        FString JsonResponse = Response->GetContentAsString();
-        UE_LOG(LogTemp, Log, TEXT("Response: %s"), *JsonResponse);
-        OnGitHubSearchCompleted.Broadcast(JsonResponse);
+        TSharedPtr<FJsonObject> JsonObject;
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+        {
+            const TArray<TSharedPtr<FJsonValue>>& Items = JsonObject->GetArrayField("items");
+            for (const TSharedPtr<FJsonValue>& Item : Items)
+            {
+                TSharedPtr<FJsonObject> RepositoryObject = Item->AsObject();
+                FString Name = RepositoryObject->GetStringField("name");
+                FString HtmlUrl = RepositoryObject->GetStringField("html_url");
+                UE_LOG(LogTemp, Log, TEXT("Repository Name: %s, URL: %s"), *Name, *HtmlUrl);
+
+                FGitHubRepositoryInfo GitHubInfo;
+                GitHubInfo.Name = Name;
+                GitHubInfo.HtmlUrl = HtmlUrl;
+                GitHubInfos.Add(GitHubInfo);
+            }
+        }
     }
     else
     {
         UE_LOG(LogTemp, Error, TEXT("Failed to get response or response is invalid."));
-        OnGitHubSearchCompleted.Broadcast(TEXT(""));
+        
     }
+
+    OnGitHubSearchCompleted.Broadcast(GitHubInfos);
 }
 
 
