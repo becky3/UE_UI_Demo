@@ -10,9 +10,10 @@
 #include "Json.h"
 #include "JsonObjectConverter.h"
 #include "JsonUtilities.h"
+#include "GitHubRepositoryInfo.h"
 #include "GitHubManager.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGitHubApiCompleted, const FString&, JsonResponse);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGitHubApiCompleted, const TArray<FGitHubRepositoryInfo>&, GithubInfos);
 
 /**
  * 
