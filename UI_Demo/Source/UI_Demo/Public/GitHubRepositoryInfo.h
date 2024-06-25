@@ -16,4 +16,8 @@ struct FGitHubRepositoryInfo
 
 	UPROPERTY(BlueprintReadOnly)
 	FString HtmlUrl;
+
+	UPROPERTY(BlueprintReadOnly)
+	FString AvatarUrl;
+
 };

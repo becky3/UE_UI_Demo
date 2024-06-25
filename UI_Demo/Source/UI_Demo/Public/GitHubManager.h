@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/Image.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
 #include "UObject/NoExportTypes.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
@@ -29,6 +32,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "GitHub")
     FOnGitHubApiCompleted OnGitHubSearchCompleted;
+
+    UFUNCTION(BlueprintCallable, Category = "GitHub")
+    void DownloadImageAndApplyToImageWidget(const FString& ImageUrl, UImage* ImageWidget);
 
     UFUNCTION(BlueprintCallable, Category = "Debug")
     void TestSearchRepositories(const FString& Keyword);

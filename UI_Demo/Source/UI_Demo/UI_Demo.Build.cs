@@ -21,6 +21,6 @@ public class UI_Demo : ModuleRules
 		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
 
 		// MyCustomModule
-		PrivateDependencyModuleNames.AddRange(new string[] { "Http", "Json", "JsonUtilities" });
-	}
+		PrivateDependencyModuleNames.AddRange(new string[] { "Http", "Json", "JsonUtilities", "UMG" });
+    }
 }

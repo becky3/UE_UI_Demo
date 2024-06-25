@@ -32,13 +32,20 @@ void UGitHubManager::OnSearchCompleted(FHttpRequestPtr Request, FHttpResponsePtr
             for (const TSharedPtr<FJsonValue>& Item : Items)
             {
                 TSharedPtr<FJsonObject> RepositoryObject = Item->AsObject();
+                
                 FString Name = RepositoryObject->GetStringField("name");
                 FString HtmlUrl = RepositoryObject->GetStringField("html_url");
-                UE_LOG(LogTemp, Log, TEXT("Repository Name: %s, URL: %s"), *Name, *HtmlUrl);
+
+                TSharedPtr<FJsonObject> OwnerObject = RepositoryObject->GetObjectField("owner");
+                
+                FString OwnerAvatarUrl = OwnerObject->GetStringField("avatar_url");
+
+                UE_LOG(LogTemp, Log, TEXT("Repository Name: %s, URL: %s, Owner's Avatar URL: %s"), *Name, *HtmlUrl, *OwnerAvatarUrl);
 
                 FGitHubRepositoryInfo GitHubInfo;
                 GitHubInfo.Name = Name;
                 GitHubInfo.HtmlUrl = HtmlUrl;
+                GitHubInfo.AvatarUrl = OwnerAvatarUrl;
                 GitHubInfos.Add(GitHubInfo);
             }
         }
@@ -87,4 +94,43 @@ void UGitHubManager::TestSearchRepositories(const FString& Keyword)
         });
 
     Request->ProcessRequest();
+}
+
+void UGitHubManager::DownloadImageAndApplyToImageWidget(const FString& ImageUrl, UImage* ImageWidget)
+{
+    
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+    HttpRequest->SetURL(ImageUrl);
+    HttpRequest->SetVerb("GET");
+    HttpRequest->OnProcessRequestComplete().BindLambda([ImageWidget](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+        {
+            if (bWasSuccessful && Response.IsValid() && Response->GetContentLength() > 0)
+            {
+                IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
+                TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
+
+                if (ImageWrapper.IsValid() && ImageWrapper->SetCompressed(Response->GetContent().GetData(), Response->GetContentLength()))
+                {
+                    TArray64<uint8> RawData;
+                    if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, RawData))
+                    {
+                        UTexture2D* Texture = UTexture2D::CreateTransient(ImageWrapper->GetWidth(), ImageWrapper->GetHeight(), PF_B8G8R8A8);
+                        if (Texture)
+                        {
+                            void* TextureData = Texture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+                            FMemory::Memcpy(TextureData, RawData.GetData(), RawData.Num());
+                            Texture->GetPlatformData()->Mips[0].BulkData.Unlock();
+
+                            // Update the texture with new data
+                            Texture->UpdateResource();
+
+                            // Apply the texture to the image widget
+                            ImageWidget->SetBrushFromTexture(Texture);
+                        }
+                    }
+                }
+            }
+        });
+    HttpRequest->ProcessRequest();
+    
 }
