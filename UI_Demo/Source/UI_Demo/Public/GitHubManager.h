@@ -17,6 +17,7 @@
 #include "GitHubManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGitHubApiCompleted, const TArray<FGitHubRepositoryInfo>&, GithubInfos);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGetTextureCompleted, UTexture2D*, Texture);
 
 /**
  * 
@@ -34,11 +35,12 @@ public:
     FOnGitHubApiCompleted OnGitHubSearchCompleted;
 
     UFUNCTION(BlueprintCallable, Category = "GitHub")
-    void DownloadImageAndApplyToImageWidget(const FString& ImageUrl, UImage* ImageWidget);
+    void GetTextureFromUrl(const FString& ImageUrl);
 
-    UFUNCTION(BlueprintCallable, Category = "Debug")
-    void TestSearchRepositories(const FString& Keyword);
+	UPROPERTY(BlueprintAssignable, Category = "GitHub")
+    FOnGetTextureCompleted OnGetTextureCompleted;
 
 private:
     void OnSearchCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+    void OnGetImageCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 };
