@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/Image.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
 #include "UObject/NoExportTypes.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
@@ -14,6 +17,7 @@
 #include "GitHubManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGitHubApiCompleted, const TArray<FGitHubRepositoryInfo>&, GithubInfos);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGetTextureCompleted, UTexture2D*, Texture);
 
 /**
  * 
@@ -30,9 +34,13 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GitHub")
     FOnGitHubApiCompleted OnGitHubSearchCompleted;
 
-    UFUNCTION(BlueprintCallable, Category = "Debug")
-    void TestSearchRepositories(const FString& Keyword);
+    UFUNCTION(BlueprintCallable, Category = "GitHub")
+    void GetTextureFromUrl(const FString& ImageUrl);
+
+	UPROPERTY(BlueprintAssignable, Category = "GitHub")
+    FOnGetTextureCompleted OnGetTextureCompleted;
 
 private:
     void OnSearchCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+    void OnGetImageCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 };
